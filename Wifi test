@@ -3,7 +3,7 @@ $wifiProfiles = netsh wlan show profiles | Select-String "Tous les profils d’u
     $_.Context.PostContext
 }
 
-# Créer un fichier pour stocker les informations
+# Chemin du fichier de sortie
 $filePath = "C:\ProgramData\CustomFolder\wifi-pass.txt"
 
 # Parcourir chaque profil pour obtenir le nom et le mot de passe
