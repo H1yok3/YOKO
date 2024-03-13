@@ -1,23 +1,11 @@
-# Récupérer la liste des profils Wi-Fi
-$wifiProfiles = netsh wlan show profiles | Select-String "Tous les profils d’utilisateurs" -Context 0,1 | ForEach-Object {
-    $_.Context.PostContext
-}
+# Collecte les profils Wi-Fi et les mots de passe
+$wifiProfiles = netsh wlan show profiles | Out-String
 
 # Chemin du fichier de sortie
 $filePath = "C:\ProgramData\CustomFolder\wifi-pass.txt"
 
-# Parcourir chaque profil pour obtenir le nom et le mot de passe
-foreach ($profile in $wifiProfiles) {
-    $profileName = $profile -replace "    Tous les profils d'utilisateur\s+:\s+"
-    $profileInfo = netsh wlan show profile name="$profileName" key=clear
-    $password = $profileInfo | Select-String "Contenu de la clé\s+:\s+(.*)" | ForEach-Object {
-        $_.Matches.Groups[1].Value
-    }
-    
-    # Écrire le nom du profil et le mot de passe dans le fichier
-    Add-Content -Path $filePath -Value "Profil : $profileName"
-    Add-Content -Path $filePath -Value "Mot de passe : $password`n"
-}
+# Écrit le contenu dans le fichier
+$wifiProfiles | Set-Content -Path $filePath
 
-# Afficher le chemin du fichier créé
+# Affiche le chemin du fichier créé
 Write-Host "Le fichier a été créé à l'emplacement : $filePath"
