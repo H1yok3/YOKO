@@ -50,7 +50,7 @@ Remove-Item (Get-PSreadlineOption).HistorySavePath -ErrorAction SilentlyContinue
 Clear-RecycleBin -Force -ErrorAction SilentlyContinue
 
 # Delete xml folder 
-Remove-Item $xmlpath -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item $env:USERPROFILE\xml -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 # le truc de fin
